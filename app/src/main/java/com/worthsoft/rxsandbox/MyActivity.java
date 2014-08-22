@@ -18,10 +18,13 @@ import rx.subjects.PublishSubject;
 public class MyActivity extends Activity {
 
     private final String data1[] = {"Line 1\n", "Line 2\n"};
+    private final Integer colors[] = {android.R.color.holo_blue_bright, android.R.color.holo_blue_dark, android.R.color.holo_blue_light, android.R.color.white};
 
     private TextView textView;
 
     private PublishSubject<Object> button1ClickStream = PublishSubject.create();
+    private PublishSubject<Object> button2ClickStream = PublishSubject.create();
+    private PublishSubject<Object> button3ClickStream = PublishSubject.create();
     private Subscription subscription;
 
     @Override
@@ -39,8 +42,25 @@ public class MyActivity extends Activity {
                 button1ClickStream.onNext(new Object());
             }
         });
-    }
 
+        // User clicks on button2
+        findViewById(R.id.button2).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Drive an event on our button1ClickStream
+                button2ClickStream.onNext(new Object());
+            }
+        });
+
+        // User clicks on button3
+        findViewById(R.id.button3).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Drive an event on our button1ClickStream
+                button3ClickStream.onNext(new Object());
+            }
+        });
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -53,15 +73,17 @@ public class MyActivity extends Activity {
     protected void onStart() {
         super.onStart();
 
-
         final Observable<String> stringObservable = Observable.from(data1);
 
-        subscription = Observable.zip(stringObservable, button1ClickStream, new Func2<String, Object, String>() {
-            @Override
-            public String call(String s, Object o) {
-                return s;
-            }
-        })
+        subscription = Observable.zip(
+                stringObservable,
+                button1ClickStream,
+                new Func2<String, Object, String>() {
+                    @Override
+                    public String call(String s, Object o) {
+                        return s;
+                    }
+                })
                 .startWith("Subscribed!\n")
                 .subscribe(new Action1<String>() {
                     @Override
@@ -77,6 +99,23 @@ public class MyActivity extends Activity {
                     @Override
                     public void call() {
                         textView.append("onComplete\n");
+                    }
+                });
+
+        Observable.zip(
+                Observable.from(colors),
+                button2ClickStream,
+                new Func2<Integer, Object, Integer>() {
+                    @Override
+                    public Integer call(Integer integer, Object o) {
+                        return integer;
+                    }
+                })
+                .repeat()
+                .subscribe(new Action1<Integer>() {
+                    @Override
+                    public void call(Integer colorCode) {
+                        textView.setBackgroundColor(getResources().getColor(colorCode));
                     }
                 });
     }
